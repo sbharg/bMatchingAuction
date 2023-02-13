@@ -7,6 +7,7 @@ TARGET =main
 INCLUDES =-I ./include
 OBJECTS = \
 	graph.cpp \
+	auction.cpp \
 	$(TARGET).cpp
 
 all: 
