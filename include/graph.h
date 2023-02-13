@@ -13,41 +13,12 @@
 #include <cstdlib>
 using namespace std;
 
-struct Info
-{
-    int id;
-    float weight;
-};
-
 class Node {
     public:
-    int maxSize;
-    int curSize;
-    Info* heap;
-    Info minEntry;
-
-    void print();
-    int min_id()
-    {
-        return (curSize>0 && curSize==maxSize)?heap[0].id:-1;
-    }
-
-    float min_weight()
-    {
-        return (curSize>0 && curSize==maxSize)?heap[0].weight:0.0;
-    }
-
-    int find_id(int idx)
-    {
-        for(int i=0;i<curSize;i++)
-            if(heap[i].id==idx)
-                return 1;
-        return 0;
-    }
-
-    void Add(float wt, int id);
-    void AddHeap(float wt, int id);
+    int b;
+    int deg;
     
+    void print();
 };
 
 struct EdgeE
@@ -73,7 +44,7 @@ class CSR
     int rVer;       // The number of vertices on Right for bipartite graph;
     int lVer;       // The number of vertices on left for bipartite graph;
     
-    bool readMtxB(char * filename); // reading as a bipartite graph
+    bool readMtxB(char * filename, bool abs_value, bool verbose); // reading as a bipartite graph
     
     CSR():nVer(0),nEdge(0),verPtr(NULL),verInd(NULL){}
     ~CSR()
