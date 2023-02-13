@@ -2,6 +2,7 @@
 /mtx_files/
 .vscode/
 /build/
+main
 
 # Prerequisites
 *.d
