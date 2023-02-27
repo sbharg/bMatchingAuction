@@ -13,24 +13,67 @@
 #include <cstdlib>
 using namespace std;
 
-class Node {
-    public:
-    int b;
-    int deg;
-    
-    void print();
-};
-
 struct EdgeE
 {
     int head;
     int id;         // Edge tail
     float weight;  // Edge weight
+
+    bool operator==(const EdgeE& e) const {
+        return (this->id == e.id && this->head == e.head);
+    }
+    
+    bool operator <(const EdgeE& e) const {
+        if (this->head != e.head && this->id != e.id)
+            return (this->weight < e.weight);
+        else
+            return (this->id == e.id);
+    }
+
+    bool operator >(const EdgeE& e) const {
+        if (this->head != e.head && this->id != e.id)
+            return (this->weight > e.weight);
+        else
+            return (this->id == e.id);
+    }
 };
+
 struct Edge
 {
     int id;         // Edge tail
     float weight;  // Edge weight
+
+    
+    bool operator==(const Edge& e) const {
+        return (this->id == e.id);
+    }
+
+    bool operator <(const Edge& e) const {
+        return (this->weight < e.weight);
+    }
+
+    bool operator >(const Edge& e) const {
+        return (this->weight > e.weight);
+    }
+    
+};
+
+namespace std {
+    template<> struct hash<Edge> {
+        size_t operator()(const Edge& e) const noexcept {
+            return e.id;
+        }
+    };
+}
+
+class Node {
+    public:
+    int b;
+    int deg;
+    //set<pair<double, EdgeE>> pq;  // Priority queue for objects
+    //unordered_set<Edge> matched; // For O(1) lookup times
+
+    void print();
 };
 
 class CSR

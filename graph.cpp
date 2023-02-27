@@ -4,7 +4,8 @@ using namespace std;
 
 bool CSR::readMtxB(char* filename, bool abs_value, bool verbose) {
     int count = 0, i, j;
-    int inp, m1, sym, edgecnt_;
+    int inp, m1, edgecnt_;
+    bool sym;
     int numRow, numCol, nonZeros, numEdges;
     double f;
     string s;
@@ -26,16 +27,17 @@ bool CSR::readMtxB(char* filename, bool abs_value, bool verbose) {
         found2 = s.find("hermitian");
         found3 = s.find("skew-symmetric");
         if (found1 != string::npos || found2 != string::npos || found3 != string::npos) {
-            sym = 1;
+            sym = true;
+            cout << "Symmetric matrix" << endl;
         }
         else {
-            sym = 0;
+            sym = false;
         }
         while (inf.peek() == '%') {
             getline(inf,s);
         }
         
-        if (sym==0) {    
+        if (!sym) {    
             cout << endl << "WARNING..!!" << endl;
             cout << "The mtx file contains full matrix" << endl;
             cout << "User has to make sure that input file has both (i,j) and (j,i) present." << endl;
@@ -88,7 +90,7 @@ bool CSR::readMtxB(char* filename, bool abs_value, bool verbose) {
         inf.close(); 
      
         numEdges = nonZeros;  
-        if(sym == 1) //symmetric matrix
+        if (sym) //symmetric matrix
             numEdges = nonZeros*2 - 2*diag;
 
         nEdge = numEdges;
@@ -112,15 +114,12 @@ bool CSR::readMtxB(char* filename, bool abs_value, bool verbose) {
                 }
                 count++;
             }
-            if (offset>max)
+            if (offset > max)
                 max = offset;
         }
         
         assert(count == nEdge);
         maxDeg = max;
-
-        if (verbose)
-            cout << "(|A|, |B|, n, m) := (" << lVer << ", " << rVer << ", " << nVer << ", " << nEdge << ")" << endl << endl;
     }
     else return false;
 

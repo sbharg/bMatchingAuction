@@ -106,7 +106,8 @@ int main(int argc, char** argv){
     
     // Memory Allocation
     Node* S = new Node[G.nVer];      
-    cout << "Input Processing Done: " << omp_get_wtime() - rt_start << endl << endl;	
+    cout << "Input Processing Done: " << omp_get_wtime() - rt_start << endl;	
+    cout << "(|A|, |B|, n, m) := (" << G.lVer << ", " << G.rVer << ", " << G.nVer << ", " << G.nEdge/2 << ")" << endl << endl;
 
     // Randomly assign b-values based on algorithm and run
     if (opts.algorithm == 1){
@@ -138,7 +139,8 @@ int main(int argc, char** argv){
 
         // Randomly generate a permutation of indices for the right side of the graph
         vector<int> random_idx_perm;
-        for (int i = G.lVer; i < G.nVer; ++i) {
+        random_idx_perm.reserve(G.rVer);
+        for (int i = G.lVer; i < G.nVer; i++) {
             random_idx_perm.push_back(i);
         }
         shuffle(random_idx_perm.begin(), random_idx_perm.end(), default_random_engine(time(0)));
@@ -151,14 +153,13 @@ int main(int argc, char** argv){
                 }
             }
             S[i].deg = deg;
-
+            
             if (i < G.lVer) {
                 int deg_half = floor(deg/2);
                 int random_idx = random_idx_perm.back();
                 random_idx_perm.pop_back();
                 S[i].b = S[random_idx].b = rand() % deg_half + 1; // b-value in range [1, floor(deg/2)]
             }
-
         }
         /*
         for (int i = 0; i < G.nVer; i++) {

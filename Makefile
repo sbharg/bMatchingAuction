@@ -2,7 +2,7 @@
 
 CXX = g++-12
 
-CXXFLAGS =-fopenmp -O3
+CXXFLAGS =-fopenmp -O3 -std=c++20
 TARGET =main
 INCLUDES =-I ./include
 OBJECTS = \
