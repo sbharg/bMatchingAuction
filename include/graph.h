@@ -13,11 +13,10 @@
 #include <cstdlib>
 using namespace std;
 
-struct EdgeE
-{
+struct EdgeE {
     int head;
     int id;         // Edge tail
-    float weight;  // Edge weight
+    float weight;   // Edge weight
 
     bool operator==(const EdgeE& e) const {
         return (this->id == e.id && this->head == e.head);
@@ -38,12 +37,10 @@ struct EdgeE
     }
 };
 
-struct Edge
-{
+struct Edge {
     int id;         // Edge tail
-    float weight;  // Edge weight
+    float weight;   // Edge weight
 
-    
     bool operator==(const Edge& e) const {
         return (this->id == e.id);
     }

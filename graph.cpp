@@ -100,6 +100,7 @@ bool CSR::readMtxB(char* filename, bool abs_value, bool verbose) {
 
         verPtr[0] = 0;
         int max = 0, offset; 
+        int maxEdgeWeight = 0;
         for (int i = 1; i <= nVer; i++) {
             offset = graphCRSIdx[i-1].size();
             verPtr[i] = verPtr[i-1] + offset;
@@ -112,12 +113,16 @@ bool CSR::readMtxB(char* filename, bool abs_value, bool verbose) {
                 else {
                     verInd[count].weight = graphCRSVal[i-1][j];
                 }
+                if (verInd[count].weight > maxEdgeWeight) {
+                    maxEdgeWeight = verInd[count].weight;
+                }
                 count++;
             }
             if (offset > max)
                 max = offset;
         }
         
+        cout << "W: " << maxEdgeWeight << endl;
         assert(count == nEdge);
         maxDeg = max;
     }
@@ -150,6 +155,6 @@ bool CSR::readMtxB(char* filename, bool abs_value, bool verbose) {
             break;
         }
     }
-   
-   return true;
+    
+    return true;
 }

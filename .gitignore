@@ -4,6 +4,7 @@
 /build/
 main
 .DS_Store
+test.txt
 
 # Prerequisites
 *.d

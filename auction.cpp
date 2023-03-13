@@ -14,118 +14,105 @@ void bFactorAuction(CSR* G, Node* S, double epsilon, bool verbose) {
     if (verbose) 
         cout << "Running b-Factor Auction" << endl;
 
-    double start =  omp_get_wtime();
+    double start = omp_get_wtime();
 
     // Initialize the auxilliary data structures
-    PQCollection* P = new PQCollection[G->rVer];
+    Bidder* A = new Bidder[G->lVer];    // Array of bidders
+    Object* B = new Object[G->rVer];    // Array of objects
     for (int i = G->rVer; i < G->nVer; i++) {
+        B[i - G->lVer].pq.SetCapacity(S[i].b);
         for (int j = 0; j < S[i].b; j++) {
-            EdgeE e = {-1-j, i, 0.0};
-            P[i - G->lVer].pq.insert(make_pair(0.0, e));     // Min priority queue for objects with b(i) elements
+            ObjectCopy* c = new ObjectCopy(0.0, i);
+            B[i - G->lVer].pq.Add(c);   // Min adjustable priority queue of b(i) object copies
         }
         if (verbose) {
-            cout << "P[" << i << "].pq: ";
-            for (auto it = P[i - G->lVer].pq.begin(); it != P[i - G->lVer].pq.end(); it++) {
-                cout << it->first << " " << it->second.head << ", ";
+            cout << "B[" << i << "].pq: ";
+            vector<ObjectCopy*> v = *B[i - G->lVer].pq.Raw();
+            for (auto it = v.begin(); it != v.end(); it++) {
+                cout << (*it)->price << ", " << (*it)->heap_index << " | ";
             }
             cout << endl;
         }
     }
     
-    MatchedCollection* M = new MatchedCollection[G->lVer];
-
-    deque<int> random_idx_perm;
+    deque<int> I;   //Unsaturated bidders
     for (int i = 0; i < G->lVer; i++) {
-        random_idx_perm.push_back(i);
+        I.push_back(i);
     }
-    shuffle(random_idx_perm.begin(), random_idx_perm.end(), default_random_engine(time(0)));
-    set<int> unsaturated_bidders(random_idx_perm.begin(), random_idx_perm.end());    // I
+    //shuffle(I.begin(), I.end(), default_random_engine(time(0)));
 
-    double time_init =  omp_get_wtime();
+    double time_init = omp_get_wtime();
 
-    while(!unsaturated_bidders.empty()){
-        int bidder = *(unsaturated_bidders.begin());
+    while(!I.empty()){
+        int bidder = I.front();
         
-        vector<pair<float, Edge>> objs_to_look_at;
-        for (int i = G->verPtr[bidder]; i < G->verPtr[bidder+1]; i++) {
-            if (G->verInd[i].weight >= 0 && !M[bidder].matched.contains(G->verInd[i])) {
-                float value = G->verInd[i].weight - P[G->verInd[i].id - G->lVer].pq.begin()->first;
-                objs_to_look_at.push_back(make_pair(value, G->verInd[i]));
-            }
-        }
-        
-        // Get the k largest elements from objs_to_look_at
-        vector<pair<float, Edge>> best_objs = kBestObject(objs_to_look_at, S[bidder].b + 1 - M[bidder].matched.size());
-        pair<float, Edge> comparison_obj = best_objs.back();
-        best_objs.pop_back();
+        if (A[bidder].matched.size() < S[bidder].b) {
 
-        // print the elements of objs_to_look_at
-        if (verbose) {
-            cout << "Bidder " << bidder << " (b: " << S[bidder].b << ") " << "is matched to: (";
-            for (auto& obj : M[bidder].matched) {
-                cout << obj.id << ", ";
-            }
-            cout << ") " << endl;
-            cout << "Bidder " << bidder << " is looking at objects: ";
-            for (auto& obj : best_objs) {
-                cout << "(" << obj.second.id << ") ";
-            }
-            cout << "Comparison object: (" << comparison_obj.second.id << ")";
-            cout << endl << endl;
-        }
-        
-        for (auto& edge : M[bidder].matched) {
-            int obj_id = edge.id;
-            float old_price;
-            EdgeE e;
-
-            auto it = find_if(P[obj_id - G->lVer].pq.begin(), P[obj_id - G->lVer].pq.end(), [bidder](const pair<float, EdgeE>& p ){ return p.second.head == bidder; });
-            if (it != P[obj_id - G->lVer].pq.end())
-                old_price = it->first;
-                e = it->second;
-                P[obj_id - G->lVer].pq.erase(it);
-
-            float bid = edge.weight - old_price - comparison_obj.first + epsilon;
-            P[obj_id - G->lVer].pq.insert(make_pair(old_price + bid, e));
-        }
-
-        for (auto& obj : best_objs) {
-            Edge e = obj.second;
-            int obj_id = e.id;
-            float bid = obj.first - comparison_obj.first + epsilon;
-
-            auto it = P[obj_id - G->lVer].pq.begin();
-            EdgeE e_old = it->second;
-            float old_price = it->first;
-            int old_bidder = e_old.head;
-            P[obj_id - G->lVer].pq.erase(it);
-
-            EdgeE e_new = {bidder, obj_id, e.weight};
-            P[obj_id - G->lVer].pq.insert(make_pair(old_price + bid, e_new));
-
-            // Remove matched edge from old bidder
-            if (old_bidder >= 0) {
-                Edge e_old_edge = {e_old.id, e_old.weight};
-                if (auto search = M[old_bidder].matched.find(e_old_edge); search != M[old_bidder].matched.end()) {
-                    M[old_bidder].matched.erase(search);
-                    unsaturated_bidders.insert(old_bidder);
+            vector<pair<float, Edge>> objs_to_look_at;
+            for (int i = G->verPtr[bidder]; i < G->verPtr[bidder+1]; i++) {
+                //if (G->verInd[i].weight >= 0 && !A[bidder].matched.contains(G->verInd[i].id)) {
+                if (G->verInd[i].weight >= 0 && A[bidder].matched.find(G->verInd[i].id) == A[bidder].matched.end()) {
+                    float value = G->verInd[i].weight - B[G->verInd[i].id - G->lVer].pq.Top()->price;
+                    objs_to_look_at.push_back(make_pair(value, G->verInd[i]));
                 }
             }
 
-            M[bidder].matched.insert(e);
-        }   
+            // Get the k largest elements from objs_to_look_at
+            vector<pair<float, Edge>> best_objs = kBestObject(objs_to_look_at, S[bidder].b + 1 - A[bidder].matched.size());
+            pair<float, Edge> comparison_obj = best_objs.back();
+            best_objs.pop_back();
 
-        unsaturated_bidders.erase(bidder);
+            // print the elements of objs_to_look_at
+            if (verbose) {
+                cout << "Bidder " << bidder << " (b: " << S[bidder].b << ") " << "is matched to: (";
+                for (const auto& [key, value] : A[bidder].matched ) {
+                    cout << key << ", ";
+                }
+                cout << ") " << endl;
+                cout << "Bidder " << bidder << " is looking at objects: ";
+                for (auto& obj : best_objs) {
+                    cout << "(" << obj.second.id << ") ";
+                }
+                cout << "Comparison object: (" << comparison_obj.second.id << ")";
+                cout << endl << endl;
+            }
+
+            for(const auto& [j, c] : A[bidder].matched) {
+                float bid = c->matched.weight - c->price - comparison_obj.first + epsilon;
+                c->price += bid;
+                B[c->object_id - G->lVer].pq.NoteChangedPriority(c);
+            } 
+
+            for (auto& obj : best_objs) {
+                Edge e = obj.second;
+                int obj_id = e.id;
+                float bid = obj.first - comparison_obj.first + epsilon;
+
+                ObjectCopy* c = B[obj_id - G->lVer].pq.Top();
+                int old_bidder = c->matched.id;
+                c->price += bid;
+                c->matched = {bidder, e.weight};
+                B[c->object_id - G->lVer].pq.NoteChangedPriority(c);
+                A[bidder].matched.insert({obj_id, c});
+
+                // Remove matched edge from old bidder
+                if (old_bidder >= 0) {
+                    A[old_bidder].matched.erase(obj_id);
+                    I.push_back(old_bidder);
+                }
+            }
+        }
+        I.pop_front();
     }
 
     double end =  omp_get_wtime();
+    cout << "\e[1mAuction (ε = " << epsilon << ")\e[0m" << endl;
     cout << "Time: " << end - start << endl;
-    cout << "Initialization Time: " << time_init - start << endl;
+    cout << "Initialization Time: " << time_init - start << endl << endl;
 }
 
-
 // Function to get k best objects in a given array
-vector<pair<float, Edge>> kBestObject(vector<pair<float, Edge>> objs, int k) {
+vector<pair<float, Edge>> kBestObject(vector<pair<float, Edge>>& objs, int k) {
     priority_queue<pair<float, Edge>, vector<pair<float, Edge>>, greater<pair<float, Edge>>> pq;
     for (auto & obj : objs) {
         if (pq.size() < k) {
@@ -142,8 +129,4 @@ vector<pair<float, Edge>> kBestObject(vector<pair<float, Edge>> objs, int k) {
         pq.pop();
     }
     return best_objs;
-}
-
-
-void bFactorAuction2(CSR* G, Node* S, double epsilon, bool verbose) {
 }

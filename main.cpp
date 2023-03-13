@@ -1,5 +1,6 @@
 #include "include/graph.h"
 #include "include/auction.h"
+#include "include/comparison.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -145,6 +146,7 @@ int main(int argc, char** argv){
         }
         shuffle(random_idx_perm.begin(), random_idx_perm.end(), default_random_engine(time(0)));
 
+        int cardF = 0;
         for (int i = 0; i < G.nVer; i++) {
             int deg = 0;
             for (int j = G.verPtr[i]; j < G.verPtr[i+1]; j++) {
@@ -158,7 +160,9 @@ int main(int argc, char** argv){
                 int deg_half = floor(deg/2);
                 int random_idx = random_idx_perm.back();
                 random_idx_perm.pop_back();
-                S[i].b = S[random_idx].b = rand() % deg_half + 1; // b-value in range [1, floor(deg/2)]
+                int b = rand() % deg_half + 1; // b-value in range [1, floor(deg/2)]
+                cardF += b;
+                S[i].b = S[random_idx].b = b; // b-value in range [1, floor(deg/2)]
             }
         }
         /*
@@ -166,7 +170,12 @@ int main(int argc, char** argv){
             cout << i << ": Degree is " << S[i].deg << ", b-value is " << S[i].b << endl;
         }
         */
+        cout << "Cardinality of F: " << cardF << endl;
+        float eps = 10000/cardF;
         bFactorAuction(&G, S, opts.epsilon, opts.verbose);
+        bFactorAuction(&G, S, 10000/20, opts.verbose);
+        bFactorComparison(&G, S, opts.verbose);
+        bFactorComparison_cs(&G, S, opts.verbose);
     }
     
     /*
