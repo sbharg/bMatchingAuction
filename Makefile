@@ -2,16 +2,21 @@
 
 CXX = g++-12
 
-CXXFLAGS =-fopenmp -O3 -std=c++20
+CXXFLAGS =-fopenmp -O3 -std=c++17 -Wno-deprecated-declarations
 TARGET =main
-INCLUDES =-I ./include
+INCLUDES =-I ./include -I /usr/local/include
+LDFLAGS =-L /usr/local/lib -lemon
 OBJECTS = \
 	graph.cpp \
 	auction.cpp \
+	comparison.cpp \
 	$(TARGET).cpp
 
 all: 
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(TARGET) $(OBJECTS)
+
+lemon:
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 .cpp.o: 
 	$(CXX) $(CXXFLAGS) -c $< -o $@
