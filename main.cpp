@@ -22,7 +22,7 @@ struct auction_parameters {
     bool abs_value;
     bool compare;
     double epsilon;
-    int algorithm; // 1 for b-matching auction, 0 for b-factor auction
+    int algorithm; //  0 for b-factor auction, 1 for b-matching auction, 2 for multiplicative b-matching auction
 
     auction_parameters();
     void usage();
@@ -37,7 +37,8 @@ void auction_parameters::usage() {
     "Usage: %s -f <problem_name> [-e <value>] [-p] [-a] [-v]\n\n"
 	"   -f --filename problem_name  : File containing graph. Currently inputs .mtx files\n"
     "   -e --epsilon  value         : Value for epsilon. Default is ε=0.5\n"
-    "   -p --perfect                : Use the perfect b-matching (b-factor) algorithm\n"
+    "   -p --perfect                : Use the perfect b-matching (b-factor) auction algorithm\n"
+    "   -m --multiplicative         : Use the multiplicative b-matching auction algorithm\n"
     "   -c --compare                : Perform a comparion against other algorithms\n"
     "   -a --absvalue               : Take the absolute value of edge weights\n"
     "   -v --verbose                : Verbose \n\n"
@@ -53,6 +54,7 @@ bool auction_parameters::parse(int argc, char** argv) {
         {"absvalue", no_argument, NULL, 'a'},
         {"compare", no_argument, NULL, 'c'},
         {"perfect", no_argument, NULL, 'p'},
+        {"multiplicative", no_argument, NULL, 'm'},
         
         // These do
         {"filename", required_argument, NULL, 'f'},
@@ -82,6 +84,9 @@ bool auction_parameters::parse(int argc, char** argv) {
             case 'p':   algorithm = 0;
                         break;
 
+            case 'm':   algorithm = 2;
+                        break;
+
             case 'f':   problem_name = optarg; 
                         cout << "Problem file: " << problem_name << endl;
                         if (problem_name == NULL || problem_name[0] == '\0' || *problem_name == 0) {
@@ -100,6 +105,19 @@ bool auction_parameters::parse(int argc, char** argv) {
         opt = getopt_long(argc,argv,opt_string,long_options,&longindex);
     }
     return true;
+}
+
+void print_comparison_result(string alg, AlgResult res) {
+    cout << "\e[1m" << alg << "\e[0m" << endl;
+    cout << "Total Weight: " << res.weight << endl;
+    if (res.init_time == 0) {
+        cout << "Running Time: " << res.total_time << endl << endl;
+    }
+    else {
+        cout << "Total Time: " << res.total_time << endl;
+        cout << "Conversion Time: " << res.init_time << endl;
+        cout << "Running Time: " << res.total_time - res.init_time << endl << endl;
+    }
 }
 
 int main(int argc, char** argv){
@@ -160,22 +178,13 @@ int main(int argc, char** argv){
             AlgResult ns_res = bMatchingComparison_NS(&G, S);
             AlgResult cs_res = bMatchingComparison_CS(&G, S);
 
-            cout << "\e[1mGreedy\e[0m" << endl;
-            cout << "Total Weight: " << greedy_res.weight << endl;
-            cout << "Running Time: " << greedy_res.total_time << endl << endl;
-
-            cout << "\e[1mNetwork Simplex\e[0m" << endl;
-            cout << "Total Weight: " << ns_res.weight << endl;
-            cout << "Total Time: " << ns_res.total_time << endl;
-            cout << "Conversion Time: " << ns_res.init_time << endl;
-            cout << "Running Time: " << ns_res.total_time - ns_res.init_time << endl << endl;
-
-            cout << "\e[1mPush-Relabel\e[0m" << endl;
-            cout << "Total Weight: " << cs_res.weight << endl;
-            cout << "Total Time: " << cs_res.total_time  << endl;
-            cout << "Conversion Time: " << cs_res.init_time << endl;
-            cout << "Running Time: " << cs_res.total_time - cs_res.init_time << endl << endl;
+            print_comparison_result("Greedy", greedy_res);
+            print_comparison_result("Network Simplex", ns_res);
+            print_comparison_result("Push-Relabel", cs_res);
         }
+    }
+    else if (opts.algorithm == 2) {
+        cout << "Currently working on this algorithm" << endl;
     }
     else {
         // b-factor auction algorithm
@@ -233,17 +242,8 @@ int main(int argc, char** argv){
             AlgResult ns_res = bFactorComparison_NS(&G, S);
             AlgResult cs_res = bFactorComparison_CS(&G, S);
 
-            cout << "\e[1mNetwork Simplex\e[0m" << endl;
-            cout << "Total Weight: " << ns_res.weight << endl;
-            cout << "Total Time: " << ns_res.total_time << endl;
-            cout << "Conversion Time: " << ns_res.init_time << endl;
-            cout << "Running Time: " << ns_res.total_time - ns_res.init_time << endl << endl;
-
-            cout << "\e[1mPush-Relabel\e[0m" << endl;
-            cout << "Total Weight: " << cs_res.weight << endl;
-            cout << "Total Time: " << cs_res.total_time  << endl;
-            cout << "Conversion Time: " << cs_res.init_time << endl;
-            cout << "Running Time: " << cs_res.total_time - cs_res.init_time << endl << endl;
+            print_comparison_result("Network Simplex", ns_res);
+            print_comparison_result("Push-Relabel", cs_res);
         }
     }
     
