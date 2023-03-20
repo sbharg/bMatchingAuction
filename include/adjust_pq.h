@@ -189,4 +189,4 @@ class AdjustablePriorityQueue {
   std::vector<T*> elems_;
 };
 
-#endif  // OR_TOOLS_BASE_ADJUSTABLE_PRIORITY_QUEUE_H_
+#endif  // ADJUST_PQ
