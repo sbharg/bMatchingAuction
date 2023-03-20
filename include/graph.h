@@ -14,6 +14,8 @@
 using namespace std;
 
 struct EdgeE {
+    EdgeE(int head, int id, float weight) : head(head), id(id), weight(weight) { }
+
     int head;
     int id;         // Edge tail
     float weight;   // Edge weight
@@ -23,30 +25,27 @@ struct EdgeE {
     }
     
     bool operator <(const EdgeE& e) const {
-        if (this->head != e.head && this->id != e.id)
-            return (this->weight < e.weight);
-        else
-            return (this->id == e.id);
+        return (weight < e.weight);
     }
 
     bool operator >(const EdgeE& e) const {
-        if (this->head != e.head && this->id != e.id)
-            return (this->weight > e.weight);
-        else
-            return (this->id == e.id);
+        return (this->weight > e.weight);
     }
 };
 
 struct Edge {
+    Edge() : id(-1), weight(0) { }
+    Edge(int id, float weight) : id(id), weight(weight) { }
+
     int id;         // Edge tail
     float weight;   // Edge weight
 
-    bool operator==(const Edge& e) const {
-        return (this->id == e.id);
+    bool operator ==(const Edge& e) const {
+        return (this->id == e.id && this->weight == e.weight);
     }
 
     bool operator <(const Edge& e) const {
-        return (this->weight < e.weight);
+        return (weight < e.weight);
     }
 
     bool operator >(const Edge& e) const {
@@ -55,13 +54,14 @@ struct Edge {
     
 };
 
-namespace std {
-    template<> struct hash<Edge> {
-        size_t operator()(const Edge& e) const noexcept {
-            return e.id;
-        }
-    };
-}
+struct AlgResult {
+    AlgResult(double time, double init_time, double weight) 
+        : total_time(time), init_time(init_time), weight(weight) { }
+
+    double total_time;
+    double init_time;
+    double weight;
+};
 
 class Node {
     public:

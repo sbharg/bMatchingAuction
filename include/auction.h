@@ -10,9 +10,9 @@
 #include <unordered_map>
 
 
-void bMatchingAuction(CSR* G, Node* S, double epsilon, bool verbose);
+AlgResult bMatchingAuction(CSR* G, Node* S, double epsilon, bool verbose);
 
-void bFactorAuction(CSR* G, Node* S, double epsilon, bool verbose);
+AlgResult bFactorAuction(CSR* G, Node* S, double epsilon, bool verbose);
 
 vector<pair<float, Edge>> kBestObject(vector<pair<float, Edge>>& objs, int k);
 
@@ -25,8 +25,7 @@ class Auction {
 };
 
 struct ObjectCopy {
-    ObjectCopy(float price, int object_id)
-        : price(price), object_id(object_id) {}
+    ObjectCopy(float price, int object_id) : price(price), object_id(object_id) { }
 
     float price;
     int object_id;
@@ -48,9 +47,13 @@ struct ObjectCopy {
 
 struct Bidder {
     unordered_map<int, ObjectCopy*> matched;
+    //vector<BidderCopy> bidder_copies;
+    bool is_strongly_eps_happy = false;
+    bool permanent = false; // Used for b-Matching auction
 };
 
 struct Object {
+    vector<ObjectCopy> object_copies;
     AdjustablePriorityQueue<ObjectCopy, greater<ObjectCopy>> pq;
 };
 
