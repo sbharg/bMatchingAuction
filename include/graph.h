@@ -81,7 +81,7 @@ class CSR
     int maxDeg;
     int* verPtr;    // vertex pointer array of size nVer+1
     Edge* verInd;   // Edge array
-    int rVer;       // The number of vertices on Right for bipartite graph;
+    int rVer;       // The number of vertices on right for bipartite graph;
     int lVer;       // The number of vertices on left for bipartite graph;
     
     bool readMtxB(char * filename, bool abs_value, bool verbose); // reading as a bipartite graph

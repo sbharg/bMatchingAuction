@@ -10,6 +10,9 @@
 #include <cmath>
 #include <algorithm> 
 #include <random>
+#include <limits>
+
+typedef std::numeric_limits< double > dbl;
 
 using namespace std;
 
@@ -100,6 +103,8 @@ bool auction_parameters::parse(int argc, char** argv) {
 }
 
 int main(int argc, char** argv){
+    cout.precision(dbl::max_digits10);
+
     srand(time(0));
     auction_parameters opts;
     if (!opts.parse(argc,argv)) {
@@ -131,7 +136,12 @@ int main(int argc, char** argv){
                 }
             }
             S[i].deg = deg;
-            S[i].b = rand() % deg + 1; // b-value in range [1, deg]
+
+            // Taken from: https://stackoverflow.com/questions/7560114/random-number-c-in-some-range
+            std::random_device rd;
+            std::mt19937 gen(rd()); 
+            std::uniform_int_distribution<> distr(1, 10); // random integer in [1, deg]
+            S[i].b = distr(gen);
         }
         /*
         for (int i = 0; i < G.nVer; i++) {
@@ -195,9 +205,14 @@ int main(int argc, char** argv){
                 int deg_half = floor(deg/2);
                 int random_idx = random_idx_perm.back();
                 random_idx_perm.pop_back();
-                int b = rand() % deg_half + 1; // b-value in range [1, floor(deg/2)]
+                
+                // Taken from: https://stackoverflow.com/questions/7560114/random-number-c-in-some-range
+                std::random_device rd; 
+                std::mt19937 gen(rd()); 
+                std::uniform_int_distribution<> distr(1, deg_half); // random integer in [1, deg/2]
+                int b = distr(gen);
                 cardF += b;
-                S[i].b = S[random_idx].b = b; // b-value in range [1, floor(deg/2)]
+                S[i].b = S[random_idx].b = b;
             }
         }
         /*
