@@ -9,7 +9,6 @@ LDFLAGS =-L /usr/local/lib -lemon
 OBJECTS = \
 	graph.cpp \
 	auction.cpp \
-	comparison.cpp \
 	$(TARGET).cpp
 
 all: 
