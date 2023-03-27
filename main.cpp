@@ -18,7 +18,6 @@ using namespace std;
 
 struct auction_parameters {
     char* problem_name;
-    char* output_path;
     bool verbose;
     bool abs_value;
     bool compare;
@@ -30,28 +29,20 @@ struct auction_parameters {
     bool parse(int argc, char** argv);
 };
 
-auction_parameters::auction_parameters()
-    :   problem_name(NULL),
-        output_path(NULL),
-        algorithm(1),
-        abs_value(false),
-        verbose(false),
-        compare(false),
-        epsilon(0.5) {}
+auction_parameters::auction_parameters():problem_name(NULL),algorithm(1),abs_value(false),verbose(false),compare(false),epsilon(0.5){}
 
 void auction_parameters::usage() {
     const char *params =
 	"\n"
-    "Usage: %s -f <problem> [-o <file>] [-e <value>] [-p] [-m] [-c] [-a] [-v]\n\n"
-	"   -f --filename   problem     : File path containing graph. Currently only accepts .mtx files\n"
-    "   -o --output     file        : File path to print output if provided\n"
-    "   -e --epsilon    value       : Value for epsilon. Default is ε=0.5\n"
+    "Usage: %s -f <problem_name> [-e <value>] [-p] [-a] [-v]\n\n"
+	"   -f --filename problem_name  : File containing graph. Currently inputs .mtx files\n"
+    "   -e --epsilon  value         : Value for epsilon. Default is ε=0.5\n"
     "   -p --perfect                : Use the perfect b-matching (b-factor) auction algorithm\n"
     "   -m --multiplicative         : Use the multiplicative b-matching auction algorithm\n"
-    "   -c --compare                : Perform a comparison against other algorithms\n"
+    "   -c --compare                : Perform a comparion against other algorithms\n"
     "   -a --absvalue               : Take the absolute value of edge weights\n"
     "   -v --verbose                : Verbose \n\n"
-    "By default this runs the b-matching auction algorithm.\nUse -p to run the b-factor auction algorithm or -m to run the multiplicative b-matching auction algorithm.\n\n";
+    "By default this runs the b-matching auction algorithm. Use -p to run the b-factor auction algorihtm.\n\n";
     fprintf(stderr, params);
 }
 
@@ -67,13 +58,12 @@ bool auction_parameters::parse(int argc, char** argv) {
         
         // These do
         {"filename", required_argument, NULL, 'f'},
-        {"output", required_argument, NULL, 'o'},
         {"epsilon", required_argument, NULL, 'e'},
 
         {NULL, no_argument, NULL, 0}
     };
 
-    static const char *opt_string = "vhacpf:o:e:";
+    static const char *opt_string = "vhacpf:e:";
     int opt, longindex;
     opt = getopt_long(argc,argv,opt_string,long_options,&longindex);
     while (opt != -1) {
@@ -105,9 +95,6 @@ bool auction_parameters::parse(int argc, char** argv) {
                         }
                         break;
 
-            case 'o':   output_path = optarg; 
-                        break;
-
             case 'e':   epsilon = atof(optarg);
                         if (epsilon < 0) {
                             cerr << "Error: epsilon can't be negative" << endl;
@@ -120,48 +107,27 @@ bool auction_parameters::parse(int argc, char** argv) {
     return true;
 }
 
-void print_result(string alg, AlgResult &res, ostream &os = cout) {
-    os << alg << endl;
-    os << "Total Weight: " << res.weight << endl;
+void print_comparison_result(string alg, AlgResult res) {
+    cout << "\e[1m" << alg << "\e[0m" << endl;
+    cout << "Total Weight: " << res.weight << endl;
     if (res.init_time == 0) {
-        os << "Running Time: " << res.total_time << endl << endl;
+        cout << "Running Time: " << res.total_time << endl << endl;
     }
     else {
-        os << "Total Time: " << res.total_time << endl;
-        os << "Conversion Time: " << res.init_time << endl;
-        os << "Running Time: " << res.total_time - res.init_time << endl << endl;
+        cout << "Total Time: " << res.total_time << endl;
+        cout << "Conversion Time: " << res.init_time << endl;
+        cout << "Running Time: " << res.total_time - res.init_time << endl << endl;
     }
-}
-
-void print_weight_comp(string alg, AlgResult &res, AlgResult &opt, bool line_skip = false, ostream &os = cout) {
-    double weight_ratio = res.weight / opt.weight;
-    os << alg << " %OPT: " << weight_ratio << endl;
-    if (line_skip)
-        os << endl;
-}
-
-void print_time_comp(string alg, AlgResult &auc, AlgResult &comp, bool line_skip = false, ostream &os = cout) {
-    double time_ratio = (comp.total_time - comp.init_time) / auc.total_time;
-    os << "Time Ratio (" << alg << "/Auction): " << time_ratio << endl;
-    if (line_skip)
-        os << endl;
 }
 
 int main(int argc, char** argv){
     cout.precision(dbl::max_digits10);
+
+    srand(time(0));
     auction_parameters opts;
     if (!opts.parse(argc,argv)) {
         return -1;
     }
-
-    ofstream fout;
-    if (opts.output_path != NULL) {
-		fout.open(opts.output_path, ios::app);
-        fout.precision(dbl::max_digits10);
-        if (fout.is_open()) {
-            fout << "Problem file: " << opts.problem_name << endl;
-        }
-	}
     
     // Reading the input 
     double rt_start = omp_get_wtime();	
@@ -171,15 +137,7 @@ int main(int argc, char** argv){
     // Memory Allocation
     Node* S = new Node[G.nVer];      
     cout << "Input Processing Done: " << omp_get_wtime() - rt_start << endl;	
-    cout << "(|A|, |B|, n, m) := (" << G.lVer << ", " << G.rVer << ", " << G.nVer << ", " << G.nEdge/2 << ")" << endl;
-    cout << "W: " << G.maxWeight << endl;
-    cout << "Average Degree: " << G.avgDeg << endl;
-    if (fout.is_open()) {
-        fout << "Input Processing Done: " << omp_get_wtime() - rt_start << endl;	
-        fout << "(|A|, |B|, n, m) := (" << G.lVer << ", " << G.rVer << ", " << G.nVer << ", " << G.nEdge/2 << ")" << endl;
-        fout << "W: " << G.maxWeight << endl;
-        fout << "Average Degree: " << G.avgDeg << endl;
-    }
+    cout << "(|A|, |B|, n, m) := (" << G.lVer << ", " << G.rVer << ", " << G.nVer << ", " << G.nEdge/2 << ")" << endl << endl;
 
     // Randomly assign b-values based on algorithm and run
     if (opts.algorithm == 1){
@@ -188,7 +146,6 @@ int main(int argc, char** argv){
             cout << "Randomly generating b-values" << endl;
 
         // Assignment of b-values
-        int bA = 0, bB = 0;
         for (int i = 0; i < G.nVer; i++) {
             int deg = 0;
             for (int j = G.verPtr[i]; j < G.verPtr[i+1]; j++) {
@@ -203,57 +160,31 @@ int main(int argc, char** argv){
             std::mt19937 gen(rd()); 
             std::uniform_int_distribution<> distr(1, 10); // random integer in [1, deg]
             S[i].b = distr(gen);
-            bA += i < G.lVer ? S[i].b : 0;
-            bB += i >= G.lVer ? S[i].b : 0;
         }
-
-        cout << "Average b-value: " << (bA + bB) / (double) G.nVer << endl;
-        cout << "b(A): " << bA << endl;
-        cout << "b(B): " << bB << endl << endl;
-        if (fout.is_open()) {
-            fout << "Average b-value: " << (bA + bB) / (double) G.nVer << endl;
-            fout << "b(A): " << bA << endl;
-            fout << "b(B): " << bB << endl << endl;
-        }   
-        
+        /*
+        for (int i = 0; i < G.nVer; i++) {
+            cout << i << ": Degree is " << S[i].deg << ", b-value is " << S[i].b << endl;
+        }
+        */
         AlgResult auc_res = bMatchingAuction(&G, S, opts.epsilon, opts.verbose);
-        string auc_str = "Auction (ε = " + to_string(opts.epsilon) + ")";
-        print_result(auc_str, auc_res);
-        if (fout.is_open())
-            print_result(auc_str, auc_res, fout);
+
+        cout << "\e[1mAuction (ε = " << opts.epsilon << ")\e[0m" << endl;
+        cout << "Total Weight: " << auc_res.weight << endl;
+        cout << "Initialization Time: " << auc_res.init_time << endl;
+        cout << "Running Time: " << auc_res.total_time << endl << endl;
 
         if (opts.compare) {
             AlgResult greedy_res = bMatchingGreedy(&G, S);
             AlgResult ns_res = bMatchingComparison_NS(&G, S);
-            AlgResult cs_res = bMatchingComparison_CS(&G, S);   
+            AlgResult cs_res = bMatchingComparison_CS(&G, S);
 
-            print_result("Greedy", greedy_res);
-            print_result("Network Simplex (NS)", ns_res);
-            print_result("Cost Scaling Push-Relabel (COS)", cs_res);
-
-            print_weight_comp("Auction", auc_res, ns_res);
-            print_weight_comp("Greedy", greedy_res, ns_res, true);
-
-            print_time_comp("Greedy", auc_res, greedy_res);
-            print_time_comp("NS", auc_res, ns_res);
-            print_time_comp("COS", auc_res, cs_res, true);
-
-            if (fout.is_open()) {
-                print_result("Greedy", greedy_res, fout);
-                print_result("Network Simplex (NS)", ns_res, fout);
-                print_result("Cost Scaling Push-Relabel (COS)", cs_res, fout);
-
-                print_weight_comp("Auction", auc_res, ns_res, false, fout);
-                print_weight_comp("Greedy", greedy_res, ns_res, true, fout);
-
-                print_time_comp("Greedy", auc_res, greedy_res, false, fout);
-                print_time_comp("NS", auc_res, ns_res, false, fout);
-                print_time_comp("COS", auc_res, cs_res, true, fout);
-            }
+            print_comparison_result("Greedy", greedy_res);
+            print_comparison_result("Network Simplex", ns_res);
+            print_comparison_result("Push-Relabel", cs_res);
         }
     }
     else if (opts.algorithm == 2) {
-        cout << "Currently not implemented" << endl;
+        cout << "Currently working on this algorithm" << endl;
     }
     else {
         // b-factor auction algorithm
@@ -311,15 +242,35 @@ int main(int argc, char** argv){
             AlgResult ns_res = bFactorComparison_NS(&G, S);
             AlgResult cs_res = bFactorComparison_CS(&G, S);
 
-            print_result("Network Simplex", ns_res);
-            print_result("Push-Relabel", cs_res);
+            print_comparison_result("Network Simplex", ns_res);
+            print_comparison_result("Push-Relabel", cs_res);
         }
     }
     
     delete[] S;
-    if (fout.is_open()) {
-        fout << "##################################################################" << endl << endl;
-        fout.close();
-    }
+    
     return 0;
+    /*
+	if(opts.verbose)
+	{
+		ofstream fout;
+		fout.open("matching.txt",ios::out);
+		if(fout.is_open())
+		{
+			fout<<"*Vertices "<<G.nVer<<endl;
+			fout<<"*arcs"<<endl;
+			for(int i=0;i<G.nVer;i++)
+				for(int j=0;j<S[i].curSize;j++)
+					if(i>S[i].heap[j].id)
+						fout<<i+1<<" "<<S[i].heap[j].id+1<<" "<<S[i].heap[j].weight<<endl;
+		}
+		fout.close();
+	}
+    for(int i=0;i<G.nVer;i++)
+        delete S[i].heap;
+    
+    delete S;
+    
+    return 0;
+    */
 }
