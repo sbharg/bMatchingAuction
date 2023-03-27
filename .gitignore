@@ -5,6 +5,8 @@
 main
 .DS_Store
 test.txt
+test.ipynb
+results/
 
 # Prerequisites
 *.d
