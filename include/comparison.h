@@ -209,30 +209,30 @@ AlgResult bMatchingComparison_CS(CSR* G, Node* S) {
 AlgResult bMatchingGreedy(CSR* G, Node* S) {
     double start = omp_get_wtime();
 
-    int num_matched[G->nVer] = {}; // Array to keep track of number of incident matched edges for each vertex
+    int saturation[G->nVer] = {}; // Array to keep track of number of incident matched edges for each vertex
 
-    // Populate and sort vector of edges by weight in ascending order
+    // Populate and sort vector of edges by weight in ascending order  
     vector<EdgeE> edges;
     edges.reserve(G->nEdge);
     for (int i = 0; i < G->lVer; i++) {
         for (int j = G->verPtr[i]; j < G->verPtr[i+1]; j++) {
             if (G->verInd[j].weight >= 0) {
-                edges.push_back(EdgeE(i, G->verInd[j].id, G->verInd[j].weight));
+                edges.push_back(EdgeE(i, G->verInd[j].id, (double) G->verInd[j].weight));
             }
         }
     }
     sort(edges.begin(), edges.end());
 
     // Greedily match edges
-    double weight;
+    double weight = 0;
     while (!edges.empty()) {
         EdgeE e = edges.back();
         int u = e.head;
         int v = e.id;
-        // Match edge if it doesn't violate any b-values
-        if (num_matched[u] < S[u].b && num_matched[v] < S[v].b) {
-            num_matched[u]++;
-            num_matched[v]++;
+        // Match edge if it doesn't oversaturate either of its vertices
+        if (saturation[u] < S[u].b && saturation[v] < S[v].b) {
+            saturation[u]++;
+            saturation[v]++;
             weight += e.weight;
         }
         edges.pop_back();
