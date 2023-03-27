@@ -79,6 +79,8 @@ class CSR
     int nVer;       // number of vertices 
     int nEdge;      // number of edges
     int maxDeg;
+    double avgDeg;
+    double maxWeight;
     int* verPtr;    // vertex pointer array of size nVer+1
     Edge* verInd;   // Edge array
     int rVer;       // The number of vertices on right for bipartite graph;
